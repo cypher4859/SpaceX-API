@@ -13,8 +13,11 @@ import routes from './routes/index.js';
 dotenv.config();
 
 const app = new Koa();
-
-mongoose.connect(process.env.SPACEX_MONGO, {
+const username = process.env.DB_USERNAME;
+const password = process.env.DB_PASSWORD;
+const database = process.env.DB_NAME;
+const host = process.env.DB_HOST;
+mongoose.connect(`mongodb://${username}:${password}@${host}:27017/${database}`, {
   bufferCommands: false,
   family: 4,
 });

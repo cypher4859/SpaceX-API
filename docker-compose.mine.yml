@@ -1,0 +1,58 @@
+version: "3.8"
+
+services:
+  app:
+    build:
+      context: .
+    ports:
+      - "6673:6673"
+    volumes:
+      - spacex-node-modules:/app/node_modules
+    environment:
+      MONGO_URI: mongodb://root:rootpassword@mongo:27017/mydatabase
+      DB_HOST: mongo
+      DB_NAME: mydatabase
+      DB_USERNAME: root
+      DB_PASSWORD: rootpassword
+      SPACEX_API: https://api.spacexdata.com
+    depends_on:
+      - mongo
+    healthcheck:
+      test: ["CMD-SHELL", "curl -X GET http://localhost:6673/v4/admin/health"]
+      interval: 45s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
+
+  worker:
+    build:
+      context: .
+    volumes:
+      - spacex-node-modules:/app/node_modules
+    environment:
+      SPACEX_API: https://api.spacexdata.com
+      SPACEX_WORKER: true
+    depends_on:
+      app:
+        condition: service_healthy
+
+  mongo:
+    image: mongo:6.0
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      # - mongo_data:/data/db
+      - ./init-mongo.sh:/docker-entrypoint-initdb.d/init-mongo.sh
+    environment:
+      MONGO_INITDB_DATABASE: mydatabase
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: rootpassword
+
+volumes:
+  mongo_data:
+  spacex-node-modules:
+
+networks:
+  default:
+    driver: bridge
